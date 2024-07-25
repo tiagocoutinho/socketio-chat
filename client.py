@@ -1,23 +1,26 @@
 import asyncio
 import socketio
 
-sio = socketio.AsyncClient()
+CHAT_NAMESPACE = "/chat"
 
-@sio.event(namespace="/chat")
+sio = socketio.AsyncClient()
+chat_event = sio.event(namespace=CHAT_NAMESPACE)
+
+
+@chat_event
 async def connect():
     print('connection established')
 
-@sio.event(namespace="/chat")
+@chat_event
 async def chat_message(data):
     print('message received with ', data)
-    #await sio.emit('my response', {'response': 'my response'})
 
-@sio.event(namespace="/chat")
+@chat_event
 async def disconnect():
     print('disconnected from server')
 
 async def main():
-    await sio.connect('http://localhost:8080', namespaces=["/chat"])
+    await sio.connect('http://localhost:8080', namespaces=[CHAT_NAMESPACE])
     await sio.wait()
 
 if __name__ == '__main__':

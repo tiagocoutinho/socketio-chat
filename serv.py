@@ -1,18 +1,20 @@
-from aiohttp import web
+import aiohttp.web
 import socketio
 
-sio = socketio.AsyncServer(
-    namespaces=["/chat"]
-)
-app = web.Application()
-sio.attach(app)
+CHAT_NAMESPACE = "/chat"
 
-@sio.event(namespace="/chat")
+app = aiohttp.web.Application()
+sio = socketio.AsyncServer(namespaces=[CHAT_NAMESPACE])
+sio.attach(app)
+chat_event = sio.event(namespace=CHAT_NAMESPACE)
+
+
+@chat_event
 async def connect(sid, environ):
     print("connect ", sid)
-    await sio.enter_room(sid, "chat_room", namespace="/chat")
+    await sio.enter_room(sid, "chat_room", namespace=CHAT_NAMESPACE)
 
-@sio.event(namespace="/chat")
+@chat_event
 async def chat_message(sid, data):
     print("message ", data)
     await sio.emit(
@@ -22,10 +24,10 @@ async def chat_message(sid, data):
         room="chat_room"
     )
 
-@sio.event(namespace="/chat")
+@chat_event
 async def disconnect(sid):
     print('disconnect ', sid)
-    await sio.leave_room(sid, "chat_room", namespace="/chat")
+    await sio.leave_room(sid, "chat_room", namespace=CHAT_NAMESPACE)
 
 if __name__ == '__main__':
-    web.run_app(app)
+    aiohttp.web.run_app(app)
