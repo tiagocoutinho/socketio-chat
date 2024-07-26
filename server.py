@@ -5,8 +5,12 @@ CHAT_ROOM = "chat_room"
 EVENT = "chat_message"
 
 app = aiohttp.web.Application()
-sio = socketio.AsyncServer()
+sio = socketio.AsyncServer(cors_allowed_origins=[
+    'http://localhost:8080',
+    'https://admin.socket.io',
+])
 sio.attach(app)
+sio.instrument(auth=False)
 
 USERS = {}
 
@@ -14,8 +18,8 @@ async def send_message(message):
     await sio.emit(EVENT, message, room=CHAT_ROOM)
 
 @sio.event
-async def connect(sid, environ):
-    print(f"{sid} connected")
+async def connect(sid, environ, *args, **kwargs):
+    print(f"{sid} connected", args, kwargs)
 
 @sio.event
 async def chat_register(sid, name):
@@ -39,4 +43,5 @@ async def disconnect(sid):
         await sio.leave_room(sid, "chat_room")
 
 if __name__ == '__main__':
+    print("Admin console available at https://admin.socket.io (Server: http://localhost:8080)")
     aiohttp.web.run_app(app)
