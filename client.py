@@ -25,17 +25,23 @@ async def disconnect():
     print('disconnected from server')
 
 async def interactive_shell():
-    session = PromptSession("Say something: ")
-    while True:
-        message = await session.prompt_async()
-        await sio.emit(EVENT, message)
+    session = PromptSession(f"{NAME} (You)> ")
+    try:
+        while True:
+            message = await session.prompt_async()
+            await sio.emit(EVENT, message)
+    except KeyboardInterrupt:
+        print("Ctrl-C pressed. Bailing out")
 
 async def main():
     with patch_stdout():
         await sio.connect('http://localhost:8080')
-        shell = asyncio.create_task(interactive_shell())
-        await sio.wait()
-    shell.cancel()
+        serve = asyncio.create_task(sio.wait())
+        try:
+            await interactive_shell()
+        finally:
+            await sio.disconnect()
+            await serve
 
 if __name__ == '__main__':
     asyncio.run(main())
